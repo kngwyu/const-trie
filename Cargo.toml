@@ -1,0 +1,4 @@
+[package]
+name = "const-trie"
+version = "0.1.0"
+authors = ["kngwyu <yuji.kngw.80s.revive@gmail.com>"]
