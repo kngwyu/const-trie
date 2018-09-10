@@ -41,9 +41,6 @@ impl PatId {
     pub fn is_empty(self) -> bool {
         self == Self::EMPTY
     }
-    pub fn new(u: u32) -> Self {
-        PatId(u)
-    }
 }
 
 /// Represents compressed order of ASCII bytes
@@ -61,9 +58,6 @@ impl ByteOrd {
     #[inline(always)]
     pub fn is_empty(self) -> bool {
         self == Self::EMPTY
-    }
-    pub fn new(u: u8) -> Self {
-        ByteOrd(u)
     }
 }
 

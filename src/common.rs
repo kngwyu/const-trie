@@ -12,7 +12,7 @@ pub(crate) fn ordering<P: AsRef<[u8]>>(
                 return Err(InvalidByteError(b as char));
             }
             if ord[u].is_empty() {
-                ord[u] = ByteOrd::new(count);
+                ord[u] = ByteOrd(count);
                 count += 1;
             }
         }
