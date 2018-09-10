@@ -13,6 +13,9 @@ impl Node {
     fn next(&self, ord: ByteOrd) -> NodeId {
         self.next[ord.idx()]
     }
+    fn next_mut(&mut self, ord: ByteOrd) -> &mut NodeId {
+        &mut self.next[ord.idx()]
+    }
 }
 
 impl Default for Node {
@@ -31,47 +34,47 @@ pub struct AcAutomaton<P> {
     nodes: Vec<Node>,
     initial_bytes: Vec<u8>,
     ord: [ByteOrd; CHAR_MAX],
-    num_chars: usize,
+    max_ord: ByteOrd,
 }
 
 impl<P: AsRef<[u8]>> AcAutomaton<P> {
     pub fn construct(words: impl Iterator<Item = P>) -> Result<Self, InvalidByteError> {
         let patterns: Vec<_> = words.collect();
-        let (ord, num_chars) = common::ordering(patterns.iter())?;
+        let (ord, max_ord) = common::ordering(patterns.iter())?;
         let initial_bytes = common::initial_bytes(patterns.iter())?;
         let mut nodes = vec![Node::default()];
         for (i, s) in patterns.iter().enumerate() {
             let mut cur = NodeId::ROOT;
             for &b in s.as_ref() {
                 let ord = ord[b as usize];
-                if nodes[cur.idx()].next[ord.idx()].is_empty() {
-                    nodes[cur.idx()].next[ord.idx()] = NodeId(nodes.len() as u32);
+                if nodes[cur.idx()].next(ord).is_empty() {
+                    *nodes[cur.idx()].next_mut(ord) = NodeId(nodes.len() as u32);
                     nodes.push(Node::default());
                 }
-                cur = nodes[cur.idx()].next[ord.idx()];
+                cur = nodes[cur.idx()].next(ord);
             }
             nodes[cur.idx()].accepts.push(PatId(i as u32));
         }
         let mut que = VecDeque::new();
-        for i in 0..num_chars {
-            if nodes[NodeId::ROOT.idx()].next[i].is_empty() {
-                nodes[NodeId::ROOT.idx()].next[i] = NodeId::ROOT;
+        for ord in (0..max_ord.0).map(ByteOrd) {
+            if nodes[NodeId::ROOT.idx()].next(ord).is_empty() {
+                *nodes[NodeId::ROOT.idx()].next_mut(ord) = NodeId::ROOT;
             } else {
-                let next = nodes[NodeId::ROOT.idx()].next[i];
+                let next = nodes[NodeId::ROOT.idx()].next(ord);
                 nodes[next.idx()].fail = NodeId::ROOT;
                 que.push_back(next);
             }
         }
         while let Some(cur) = que.pop_front() {
-            for i in 0..num_chars {
-                if nodes[cur.idx()].next[i].is_empty() {
+            for ord in (0..max_ord.0).map(ByteOrd) {
+                if nodes[cur.idx()].next(ord).is_empty() {
                     continue;
                 }
                 let mut fail = nodes[cur.idx()].fail;
-                while nodes[fail.idx()].next[i].is_empty() {
+                while nodes[fail.idx()].next(ord).is_empty() {
                     fail = nodes[fail.idx()].fail;
                 }
-                nodes[cur.idx()].fail = nodes[fail.idx()].next[i];
+                nodes[cur.idx()].fail = nodes[fail.idx()].next(ord);
             }
         }
         Ok(AcAutomaton {
@@ -79,7 +82,7 @@ impl<P: AsRef<[u8]>> AcAutomaton<P> {
             nodes,
             initial_bytes,
             ord,
-            num_chars,
+            max_ord,
         })
     }
     pub fn run(&self, query: &str) {

@@ -31,13 +31,12 @@ struct TrieInner<P, V> {
     nodes: Vec<Node>,
     initial_bytes: Vec<u8>,
     ord: [ByteOrd; CHAR_MAX],
-    num_chars: usize,
 }
 
 impl<P: AsRef<[u8]>, V> TrieInner<P, V> {
     fn construct(words: impl Iterator<Item = (P, V)>) -> Result<Self, InvalidByteError> {
         let patterns: Vec<_> = words.collect();
-        let (ord, num_chars) = common::ordering(patterns.iter().map(|t| &t.0))?;
+        let (ord, _) = common::ordering(patterns.iter().map(|t| &t.0))?;
         let initial_bytes = common::initial_bytes(patterns.iter().map(|t| &t.0))?;
         let mut nodes = vec![Node::default()];
         for (i, (s, _)) in patterns.iter().enumerate() {
@@ -57,7 +56,6 @@ impl<P: AsRef<[u8]>, V> TrieInner<P, V> {
             nodes,
             initial_bytes,
             ord,
-            num_chars,
         })
     }
     fn run(&self, pat: P) -> PatId {
@@ -67,6 +65,9 @@ impl<P: AsRef<[u8]>, V> TrieInner<P, V> {
             return PatId::EMPTY;
         }
         for &b in bytes {
+            if b as usize >= CHAR_MAX {
+                return PatId::EMPTY;
+            }
             let ord = self.ord[b as usize];
             if ord.is_empty() {
                 return PatId::EMPTY;

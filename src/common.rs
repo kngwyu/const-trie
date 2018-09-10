@@ -2,9 +2,9 @@ use super::{ByteOrd, InvalidByteError, CHAR_MAX};
 
 pub(crate) fn ordering<P: AsRef<[u8]>>(
     word_iter: impl Iterator<Item = P>,
-) -> Result<([ByteOrd; CHAR_MAX], usize), InvalidByteError> {
+) -> Result<([ByteOrd; CHAR_MAX], ByteOrd), InvalidByteError> {
     let mut ord = [ByteOrd::EMPTY; CHAR_MAX];
-    let mut count = 0;
+    let mut count = ByteOrd(0);
     for word in word_iter {
         for &b in word.as_ref() {
             let u = b as usize;
@@ -12,12 +12,12 @@ pub(crate) fn ordering<P: AsRef<[u8]>>(
                 return Err(InvalidByteError(b as char));
             }
             if ord[u].is_empty() {
-                ord[u] = ByteOrd(count);
-                count += 1;
+                ord[u] = count;
+                count.0 += 1;
             }
         }
     }
-    return Ok((ord, count as usize));
+    return Ok((ord, count));
 }
 
 pub(crate) fn initial_bytes<P: AsRef<[u8]>>(
