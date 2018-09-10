@@ -36,6 +36,22 @@ pub(crate) fn initial_bytes<P: AsRef<[u8]>>(
     return Ok(res);
 }
 
+pub(crate) fn transitions(upper_bound: ByteOrd) -> impl Iterator<Item = ByteOrd> {
+    (0..upper_bound.0).map(ByteOrd)
+}
+
+// from
+// https://github.com/BurntSushi/aho-corasick/blob/a738d5fd20d24dc41633c254d044eebba5caf081/src/lib.rs#L425
+pub(crate) fn get_two<T>(xs: &mut [T], i: usize, j: usize) -> (&mut T, &mut T) {
+    if i < j {
+        let (before, after) = xs.split_at_mut(j);
+        (&mut before[i], &mut after[0])
+    } else {
+        let (before, after) = xs.split_at_mut(i);
+        (&mut after[0], &mut before[j])
+    }
+}
+
 #[cfg(test)]
 pub(crate) mod test_data {
     // https://en.wikipedia.org/wiki/Deathbird_Stories

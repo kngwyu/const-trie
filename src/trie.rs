@@ -58,13 +58,13 @@ impl<P: AsRef<[u8]>, V> TrieInner<P, V> {
             ord,
         })
     }
-    fn run(&self, pat: P) -> PatId {
-        let bytes = pat.as_ref();
+    fn run(&self, query: P) -> PatId {
+        let query = query.as_ref();
         let mut cur = NodeId::ROOT;
-        if bytes.is_empty() || !self.initial_bytes.contains(&bytes[0]) {
+        if query.is_empty() || !self.initial_bytes.contains(&query[0]) {
             return PatId::EMPTY;
         }
-        for &b in bytes {
+        for &b in query {
             if b as usize >= CHAR_MAX {
                 return PatId::EMPTY;
             }
@@ -131,7 +131,9 @@ mod test {
     fn set_test_sparce() {
         let test_data = &common::test_data::WORDS_SPARCE;
         let trie_set = TrieSet::new(test_data).unwrap();
-        assert!(trie_set.contains(&test_data[3]));
+        for i in 0..test_data.len() {
+            assert!(trie_set.contains(&test_data[i]));
+        }
         assert!(!trie_set.contains(&"ok"));
         assert!(!trie_set.contains(&"aok"));
         assert!(!trie_set.contains(&"ab"));
